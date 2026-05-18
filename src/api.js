@@ -1,17 +1,13 @@
-// src/api.js — Groq API calls
+// src/api.js — calls our Express proxy (Groq key stays server-side)
 
-const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL   = 'llama-3.3-70b-versatile'; // fast & capable; swap for 'mixtral-8x7b-32768' if preferred
-const API_KEY = 'YOUR_GROQ_API_KEY_HERE';
+const API_URL = '/api/groq';
+const MODEL   = 'llama-3.3-70b-versatile';
 
-/** Shared fetch wrapper for both endpoints. */
+/** Shared fetch wrapper */
 async function callGroq(systemPrompt, userPrompt, maxTokens = 1000) {
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: MODEL,
       max_tokens: maxTokens,
@@ -35,7 +31,7 @@ async function callGroq(systemPrompt, userPrompt, maxTokens = 1000) {
 /**
  * Analyse a batch of IT feedback entries.
  * @param {Array<{category:string, source:string, text:string}>} batch
- * @returns {Promise<Array>} analysed results merged with original entries
+ * @returns {Promise<Array>}
  */
 async function analyseEntries(batch) {
   const system = `You are an IT industry sentiment analyst. You return ONLY valid JSON arrays — no markdown, no backticks, no explanation, no preamble. Raw JSON only.`;
@@ -54,7 +50,13 @@ ${batch.map((e, i) => `[${i}] Category: ${e.category}\nSource: ${e.source}\nText
 
   const raw    = await callGroq(system, user, 1200);
   const clean  = raw.replace(/```json|```/g, '').trim();
-  const parsed = JSON.parse(clean);
+
+  let parsed;
+  try {
+    parsed = JSON.parse(clean);
+  } catch (e) {
+    throw new Error('AI returned invalid JSON. Please try again.');
+  }
 
   return batch.map((entry, i) => {
     const result = parsed.find(p => p.id === i) || parsed[i] || {};
