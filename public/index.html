@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT Sentiment Analyser</title>
+  <link rel="stylesheet" href="../src/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+
+    <header class="app-header">
+      <div class="header-left">
+        <div class="header-icon"><i class="ti ti-radar"></i></div>
+        <div>
+          <h1>IT Sentiment Analyser</h1>
+          <p class="header-sub">Information Technology &middot; IT industry focus</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <select id="categoryFilter">
+          <option value="all">All categories</option>
+          <option value="cloud">Cloud &amp; infra</option>
+          <option value="security">Cybersecurity</option>
+          <option value="devtools">Dev tools</option>
+          <option value="support">IT support</option>
+          <option value="vendor">Vendor feedback</option>
+        </select>
+        <button class="btn btn-ghost" id="btnPrint"><i class="ti ti-printer"></i> Export report</button>
+      </div>
+    </header>
+
+    <div class="metric-grid">
+      <div class="metric-card">
+        <p class="metric-label"><i class="ti ti-database"></i> Total analysed</p>
+        <p class="metric-value" id="m-total">0</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label"><i class="ti ti-trending-up"></i> Positive</p>
+        <p class="metric-value positive" id="m-pos">0%</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label"><i class="ti ti-trending-down"></i> Negative</p>
+        <p class="metric-value negative" id="m-neg">0%</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label"><i class="ti ti-minus"></i> Neutral</p>
+        <p class="metric-value neutral" id="m-neu">0%</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label"><i class="ti ti-chart-line"></i> Avg score</p>
+        <p class="metric-value" id="m-score">—</p>
+        <p class="metric-sub">–1 to +1</p>
+      </div>
+    </div>
+
+    <!-- Row 1: Donut + Line chart -->
+    <div class="charts-grid">
+      <div class="card">
+        <p class="section-label"><i class="ti ti-chart-donut-3"></i> Sentiment breakdown</p>
+        <div class="donut-row">
+          <div class="donut-wrap">
+            <canvas id="donutChart"></canvas>
+            <div class="donut-center" id="donutCenter">—</div>
+          </div>
+          <div class="breakdown-bars">
+            <div class="bar-row">
+              <span class="bar-label">Positive</span>
+              <div class="bar-track"><div class="bar-fill green" id="bar-pos" style="width:0%"></div></div>
+              <span class="bar-pct" id="bpct-pos">0%</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Neutral</span>
+              <div class="bar-track"><div class="bar-fill gray" id="bar-neu" style="width:0%"></div></div>
+              <span class="bar-pct" id="bpct-neu">0%</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Negative</span>
+              <div class="bar-track"><div class="bar-fill red" id="bar-neg" style="width:0%"></div></div>
+              <span class="bar-pct" id="bpct-neg">0%</span>
+            </div>
+            <p class="section-label" style="margin-top:1.2rem;"><i class="ti ti-category"></i> By category</p>
+            <div id="catBars"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="section-label"><i class="ti ti-timeline"></i> Sentiment trend over time</p>
+        <div class="chart-wrap">
+          <canvas id="lineChart"></canvas>
+          <p class="chart-empty" id="lineEmpty">Add entries to see the trend line</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Bar chart + Themes/Insights -->
+    <div class="charts-grid">
+      <div class="card">
+        <p class="section-label"><i class="ti ti-chart-bar"></i> Category score comparison</p>
+        <div class="chart-wrap chart-wrap-md">
+          <canvas id="barChart"></canvas>
+          <p class="chart-empty" id="barEmpty">Add entries to see category scores</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="section-label"><i class="ti ti-tags"></i> Key themes detected</p>
+        <div id="themeCloud" class="theme-cloud">
+          <span class="empty-hint">Run analysis to see themes</span>
+        </div>
+        <p class="section-label" style="margin-top:1.4rem;"><i class="ti ti-bulb"></i> AI insights summary</p>
+        <div id="aiSummary" class="summary-text">No data yet — add entries and run analysis.</div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="card input-card">
+      <p class="section-label"><i class="ti ti-pencil-plus"></i> Add IT feedback entry</p>
+      <div class="input-row">
+        <select id="entryCategory">
+          <option value="cloud">Cloud &amp; infra</option>
+          <option value="security">Cybersecurity</option>
+          <option value="devtools">Dev tools</option>
+          <option value="support">IT support</option>
+          <option value="vendor">Vendor feedback</option>
+        </select>
+        <input type="text" id="entrySource" placeholder="Source (e.g. Jira, Slack, survey)" />
+      </div>
+      <textarea id="entryText" placeholder="Paste IT feedback, a support ticket, a tech review, or any IT-related text… (Ctrl+Enter to submit)"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnAnalyse"><i class="ti ti-brain"></i> Analyse entry</button>
+        <button class="btn" id="btnSample"><i class="ti ti-database-import"></i> Load sample IT data</button>
+        <button class="btn btn-danger" id="btnClear"><i class="ti ti-trash"></i> Clear all</button>
+      </div>
+    </div>
+
+    <div id="loadingState" class="loading-state" style="display:none">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span>Analysing with Groq AI…</span>
+    </div>
+
+    <div id="resultsSection" style="display:none">
+      <div class="results-header">
+        <p class="section-label" style="margin:0"><i class="ti ti-list-details"></i> Analysis results</p>
+        <button class="btn btn-primary" id="btnInsights"><i class="ti ti-report-analytics"></i> Generate insights report</button>
+      </div>
+      <div id="resultsList" class="results-list"></div>
+    </div>
+
+    <!-- Print report (screen-hidden, print-visible) -->
+    <div id="printReport" class="print-report">
+      <div class="print-header">
+        <div>
+          <h2>IT Sentiment Analysis Report</h2>
+          <p id="printDate" style="color:#666;font-size:13px;margin-top:4px;"></p>
+        </div>
+      </div>
+      <div class="print-metrics" id="printMetrics"></div>
+      <h3 class="print-section-title">AI Executive Summary</h3>
+      <p id="printSummary" class="print-summary-text">Generate insights report to populate this section.</p>
+      <h3 class="print-section-title">Category Breakdown</h3>
+      <div id="printCatBars"></div>
+      <h3 class="print-section-title">Key Themes Detected</h3>
+      <div id="printThemes"></div>
+    </div>
+
+  </div>
+
+  <script src="../src/data.js"></script>
+  <script src="../src/api.js"></script>
+  <script src="../src/ui.js"></script>
+  <script src="../src/app.js"></script>
+</body>
+</html>
