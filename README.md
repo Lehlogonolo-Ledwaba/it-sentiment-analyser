@@ -69,7 +69,7 @@ it-sentiment-analyser/
 3. **Launch with Live Server**
    - Right-click `public/index.html` in the Explorer
    - Select **"Open with Live Server"**
-   - The app opens at `http://127.0.0.1:5500/public/`
+   - 
 
 ---
 
@@ -98,10 +98,10 @@ it-sentiment-analyser/
 ## Technologies
 
 - **Vanilla HTML/CSS/JS** — no build tools required
-- **Claude API** (`claude-sonnet-4-20250514`) — sentiment analysis & summarisation
+
 - **Live Server** — local development server
 
----
+---https://it-sentiment-analyser.onrender.com deployment link
 
 ## Portfolio notes
 
